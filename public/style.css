@@ -254,6 +254,7 @@ header button:hover {
 
 #chat-form {
   display: flex;
+  align-items: flex-end;
   gap: 10px;
   padding: 16px 24px 22px;
   max-width: 760px;
@@ -285,6 +286,11 @@ header button:hover {
 }
 
 #send-btn {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
   border: none;
   border-radius: 14px;
   padding: 0 22px;
