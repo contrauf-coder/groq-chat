@@ -1,0 +1,14 @@
+{
+  "name": "grok-chat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Простой чат через Groq API — статический фронтенд + прокси-бэкенд, скрывающий API-ключ",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5"
+  }
+}

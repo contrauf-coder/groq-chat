@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Groq Chat</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="access-screen" class="screen">
+  <div class="access-box">
+    <h1>Groq Chat</h1>
+    <input id="access-input" type="password" placeholder="Код доступа" autocomplete="off">
+    <button id="access-submit">Войти</button>
+    <p id="access-error" class="error"></p>
+  </div>
+</div>
+
+<div id="chat-screen" class="screen hidden">
+  <header>
+    <h1>Groq Chat</h1>
+    <button id="clear-btn" title="Новый диалог">Очистить</button>
+  </header>
+  <div id="messages"></div>
+  <form id="chat-form">
+    <textarea id="chat-input" placeholder="Напишите сообщение..." rows="1"></textarea>
+    <button id="send-btn" type="submit">Отправить</button>
+  </form>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
