@@ -10,8 +10,6 @@ const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
 const clearBtn = document.getElementById('clear-btn');
 
-const AVATARS = { user: '🧑', assistant: '🤖' };
-
 let accessCode = localStorage.getItem('groq-access-code') || '';
 let history = JSON.parse(localStorage.getItem('groq-chat-history') || '[]');
 
@@ -50,15 +48,11 @@ function addMessage(role, content) {
   const row = document.createElement('div');
   row.className = `msg-row ${role === 'user' ? 'user' : 'assistant'}`;
 
-  const avatar = document.createElement('div');
-  avatar.className = 'avatar';
-  avatar.textContent = AVATARS[role] || AVATARS.assistant;
-
   const bubble = document.createElement('div');
   bubble.className = 'msg';
   bubble.textContent = content;
 
-  row.append(avatar, bubble);
+  row.appendChild(bubble);
   messagesEl.appendChild(row);
   messagesEl.scrollTop = messagesEl.scrollHeight;
   updateEmptyState();
