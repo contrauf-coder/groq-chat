@@ -1,12 +1,13 @@
-require('dotenv').config();
-const express = require('express');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+const express = require('express');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 const ACCESS_CODE = process.env.ACCESS_CODE || '';
+const SYSTEM_PROMPT = process.env.SYSTEM_PROMPT || '';
 
 if (!GROQ_API_KEY) {
   console.error('GROQ_API_KEY не задан. Создайте .env на основе .env.example');
@@ -47,6 +48,10 @@ app.post('/api/chat', async (req, res) => {
     return res.status(400).json({ error: 'Поле messages обязательно и должно быть непустым массивом' });
   }
 
+  const fullMessages = SYSTEM_PROMPT
+    ? [{ role: 'system', content: SYSTEM_PROMPT }, ...messages]
+    : messages;
+
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -56,7 +61,7 @@ app.post('/api/chat', async (req, res) => {
       },
       body: JSON.stringify({
         model: GROQ_MODEL,
-        messages,
+        messages: fullMessages,
       }),
     });
 
