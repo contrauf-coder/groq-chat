@@ -4,12 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Groq Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="access-screen" class="screen">
   <div class="access-box">
+    <div class="logo">💬</div>
     <h1>Groq Chat</h1>
+    <p class="subtitle">Быстрый чат на базе Groq</p>
     <input id="access-input" type="password" placeholder="Код доступа" autocomplete="off">
     <button id="access-submit">Войти</button>
     <p id="access-error" class="error"></p>
@@ -18,13 +23,23 @@
 
 <div id="chat-screen" class="screen hidden">
   <header>
-    <h1>Groq Chat</h1>
+    <div class="header-title">
+      <span class="header-icon">💬</span>
+      <h1>Groq Chat</h1>
+    </div>
     <button id="clear-btn" title="Новый диалог">Очистить</button>
   </header>
-  <div id="messages"></div>
+  <div id="messages">
+    <div id="empty-state" class="empty-state">
+      <div class="empty-icon">✨</div>
+      <p>Напишите первое сообщение, чтобы начать разговор</p>
+    </div>
+  </div>
   <form id="chat-form">
     <textarea id="chat-input" placeholder="Напишите сообщение..." rows="1"></textarea>
-    <button id="send-btn" type="submit">Отправить</button>
+    <button id="send-btn" type="submit">
+      <span class="send-label">Отправить</span>
+    </button>
   </form>
 </div>
 

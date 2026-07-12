@@ -4,10 +4,13 @@ const accessInput = document.getElementById('access-input');
 const accessSubmit = document.getElementById('access-submit');
 const accessError = document.getElementById('access-error');
 const messagesEl = document.getElementById('messages');
+const emptyState = document.getElementById('empty-state');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
 const clearBtn = document.getElementById('clear-btn');
+
+const AVATARS = { user: '🧑', assistant: '🤖' };
 
 let accessCode = localStorage.getItem('groq-access-code') || '';
 let history = JSON.parse(localStorage.getItem('groq-chat-history') || '[]');
@@ -39,13 +42,33 @@ if (accessCode !== null && localStorage.getItem('groq-access-code') !== null) {
   showChat();
 }
 
+function updateEmptyState() {
+  emptyState.classList.toggle('hidden', messagesEl.querySelectorAll('.msg-row').length > 0);
+}
+
 function addMessage(role, content) {
-  const div = document.createElement('div');
-  div.className = `msg ${role}`;
-  div.textContent = content;
-  messagesEl.appendChild(div);
+  const row = document.createElement('div');
+  row.className = `msg-row ${role === 'user' ? 'user' : 'assistant'}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = AVATARS[role] || AVATARS.assistant;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg';
+  bubble.textContent = content;
+
+  row.append(avatar, bubble);
+  messagesEl.appendChild(row);
   messagesEl.scrollTop = messagesEl.scrollHeight;
-  return div;
+  updateEmptyState();
+  return bubble;
+}
+
+function addTypingIndicator() {
+  const bubble = addMessage('assistant', '');
+  bubble.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+  return bubble;
 }
 
 chatInput.addEventListener('input', () => {
@@ -72,7 +95,7 @@ chatForm.addEventListener('submit', async (e) => {
   chatInput.style.height = 'auto';
 
   sendBtn.disabled = true;
-  const pending = addMessage('assistant pending', 'Печатает...');
+  const pending = addTypingIndicator();
 
   try {
     const res = await fetch('/api/chat', {
@@ -87,7 +110,7 @@ chatForm.addEventListener('submit', async (e) => {
     const data = await res.json();
 
     if (res.status === 401) {
-      pending.remove();
+      pending.parentElement.remove();
       history.pop();
       saveHistory();
       localStorage.removeItem('groq-access-code');
@@ -105,7 +128,7 @@ chatForm.addEventListener('submit', async (e) => {
       return;
     }
 
-    pending.className = 'msg assistant';
+    pending.className = 'msg';
     pending.textContent = data.reply;
     history.push({ role: 'assistant', content: data.reply });
     saveHistory();
@@ -123,5 +146,6 @@ chatForm.addEventListener('submit', async (e) => {
 clearBtn.addEventListener('click', () => {
   history = [];
   saveHistory();
-  messagesEl.innerHTML = '';
+  messagesEl.querySelectorAll('.msg-row').forEach((row) => row.remove());
+  updateEmptyState();
 });
