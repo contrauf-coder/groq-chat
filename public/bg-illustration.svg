@@ -1,0 +1,99 @@
+<svg viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="baseGlow" cx="30%" cy="15%" r="90%">
+      <stop offset="0%" stop-color="#1b1d2c"/>
+      <stop offset="100%" stop-color="#0b0c10"/>
+    </radialGradient>
+    <linearGradient id="leafGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9ee08a"/>
+      <stop offset="100%" stop-color="#4fae63"/>
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffd166"/>
+      <stop offset="100%" stop-color="#ff9f43"/>
+    </linearGradient>
+    <linearGradient id="berryGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff8fa3"/>
+      <stop offset="100%" stop-color="#ef5f75"/>
+    </linearGradient>
+    <linearGradient id="capsuleGradA" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8f7bff"/>
+      <stop offset="100%" stop-color="#6d5ef4"/>
+    </linearGradient>
+    <linearGradient id="capsuleGradB" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#6ee7d8"/>
+      <stop offset="100%" stop-color="#3fc9b6"/>
+    </linearGradient>
+    <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="70"/>
+    </filter>
+    <filter id="mediumBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="1200" fill="url(#baseGlow)"/>
+
+  <!-- ambient color blobs, spread across the whole square -->
+  <ellipse cx="200" cy="1000" rx="340" ry="280" fill="#4fae63" opacity="0.24" filter="url(#softBlur)"/>
+  <ellipse cx="1020" cy="180" rx="360" ry="300" fill="#ff9f43" opacity="0.22" filter="url(#softBlur)"/>
+  <ellipse cx="980" cy="980" rx="320" ry="260" fill="#6d5ef4" opacity="0.22" filter="url(#softBlur)"/>
+  <ellipse cx="160" cy="180" rx="300" ry="240" fill="#ef5f75" opacity="0.18" filter="url(#softBlur)"/>
+  <ellipse cx="600" cy="600" rx="280" ry="240" fill="#3fc9b6" opacity="0.12" filter="url(#softBlur)"/>
+
+  <!-- orange citrus slice, bottom-left -->
+  <g transform="translate(190,1020)" opacity="0.6" filter="url(#mediumBlur)">
+    <circle r="120" fill="url(#orangeGrad)"/>
+    <circle r="100" fill="#fff3d6" opacity="0.85"/>
+    <g stroke="#ffb64d" stroke-width="3" opacity="0.9">
+      <line x1="0" y1="-96" x2="0" y2="96"/>
+      <line x1="-96" y1="0" x2="96" y2="0"/>
+      <line x1="-68" y1="-68" x2="68" y2="68"/>
+      <line x1="-68" y1="68" x2="68" y2="-68"/>
+      <line x1="-90" y1="-38" x2="90" y2="38"/>
+      <line x1="-90" y1="38" x2="90" y2="-38"/>
+      <line x1="-38" y1="-90" x2="38" y2="90"/>
+      <line x1="38" y1="-90" x2="-38" y2="90"/>
+    </g>
+    <circle r="120" fill="none" stroke="#ffb64d" stroke-width="11" opacity="0.7"/>
+  </g>
+
+  <!-- leaf cluster, top-right -->
+  <g transform="translate(1000,220) rotate(-18)" opacity="0.6" filter="url(#mediumBlur)">
+    <path d="M0 65 C -75 44 -75 -64 0 -96 C 75 -64 75 44 0 65 Z" fill="url(#leafGrad)"/>
+    <path d="M0 58 C 0 10 0 -30 0 -86" stroke="#2f7a45" stroke-width="4" fill="none" opacity="0.6"/>
+  </g>
+  <g transform="translate(1090,320) rotate(20) scale(0.68)" opacity="0.45" filter="url(#mediumBlur)">
+    <path d="M0 60 C -70 40 -70 -60 0 -90 C 70 -60 70 40 0 60 Z" fill="url(#leafGrad)"/>
+  </g>
+
+  <!-- leaf accent, top-left -->
+  <g transform="translate(210,190) rotate(200) scale(0.6)" opacity="0.35" filter="url(#mediumBlur)">
+    <path d="M0 60 C -70 40 -70 -60 0 -90 C 70 -60 70 40 0 60 Z" fill="url(#leafGrad)"/>
+  </g>
+
+  <!-- vitamin capsules, scattered -->
+  <g transform="translate(1010,930) rotate(35)" opacity="0.6" filter="url(#mediumBlur)">
+    <rect x="-74" y="-26" width="148" height="52" rx="26" fill="url(#capsuleGradA)"/>
+    <path d="M0 -26 A26 26 0 0 1 0 26 Z" fill="#4a3fc2" opacity="0.4"/>
+  </g>
+  <g transform="translate(140,610) rotate(-25)" opacity="0.5" filter="url(#mediumBlur)">
+    <rect x="-70" y="-24" width="140" height="48" rx="24" fill="url(#capsuleGradB)"/>
+    <path d="M0 -24 A24 24 0 0 1 0 24 Z" fill="#238f7c" opacity="0.4"/>
+  </g>
+  <g transform="translate(640,140) rotate(8) scale(0.8)" opacity="0.4" filter="url(#mediumBlur)">
+    <rect x="-70" y="-24" width="140" height="48" rx="24" fill="url(#capsuleGradA)"/>
+    <path d="M0 -24 A24 24 0 0 1 0 24 Z" fill="#4a3fc2" opacity="0.4"/>
+  </g>
+
+  <!-- berries -->
+  <g transform="translate(1080,760)" opacity="0.55" filter="url(#mediumBlur)">
+    <circle cx="0" cy="0" r="27" fill="url(#berryGrad)"/>
+    <circle cx="36" cy="19" r="21" fill="url(#berryGrad)"/>
+    <circle cx="-8" cy="36" r="19" fill="url(#berryGrad)"/>
+  </g>
+  <g transform="translate(90,860) scale(0.85)" opacity="0.45" filter="url(#mediumBlur)">
+    <circle cx="0" cy="0" r="26" fill="url(#berryGrad)"/>
+    <circle cx="34" cy="18" r="20" fill="url(#berryGrad)"/>
+  </g>
+</svg>
