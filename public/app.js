@@ -10,11 +10,16 @@ const sendBtn = document.getElementById('send-btn');
 const clearBtn = document.getElementById('clear-btn');
 
 let accessCode = localStorage.getItem('groq-access-code') || '';
-let history = [];
+let history = JSON.parse(localStorage.getItem('groq-chat-history') || '[]');
+
+function saveHistory() {
+  localStorage.setItem('groq-chat-history', JSON.stringify(history));
+}
 
 function showChat() {
   accessScreen.classList.add('hidden');
   chatScreen.classList.remove('hidden');
+  history.forEach((msg) => addMessage(msg.role, msg.content));
   chatInput.focus();
 }
 
@@ -62,6 +67,7 @@ chatForm.addEventListener('submit', async (e) => {
 
   addMessage('user', text);
   history.push({ role: 'user', content: text });
+  saveHistory();
   chatInput.value = '';
   chatInput.style.height = 'auto';
 
@@ -83,6 +89,7 @@ chatForm.addEventListener('submit', async (e) => {
     if (res.status === 401) {
       pending.remove();
       history.pop();
+      saveHistory();
       localStorage.removeItem('groq-access-code');
       accessScreen.classList.remove('hidden');
       chatScreen.classList.add('hidden');
@@ -94,16 +101,19 @@ chatForm.addEventListener('submit', async (e) => {
       pending.className = 'msg error';
       pending.textContent = data.error || 'Что-то пошло не так';
       history.pop();
+      saveHistory();
       return;
     }
 
     pending.className = 'msg assistant';
     pending.textContent = data.reply;
     history.push({ role: 'assistant', content: data.reply });
+    saveHistory();
   } catch (err) {
     pending.className = 'msg error';
     pending.textContent = 'Ошибка сети — сервер недоступен';
     history.pop();
+    saveHistory();
   } finally {
     sendBtn.disabled = false;
     chatInput.focus();
@@ -112,5 +122,6 @@ chatForm.addEventListener('submit', async (e) => {
 
 clearBtn.addEventListener('click', () => {
   history = [];
+  saveHistory();
   messagesEl.innerHTML = '';
 });
