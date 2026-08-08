@@ -72,8 +72,18 @@ function isRateLimited(ip) {
   return entry.count > RATE_LIMIT;
 }
 
+// Код доступа нужен для чужих клиентов. Запросы со своих доменов (ALLOWED_ORIGINS)
+// пропускаем без него — иначе код пришлось бы зашить в открытый код страницы,
+// где он всё равно перестал бы быть секретом.
+function isAuthorized(req) {
+  if (!ACCESS_CODE) return true;
+  if (req.get('x-access-code') === ACCESS_CODE) return true;
+  const origin = req.get('origin');
+  return Boolean(origin) && ALLOWED_ORIGINS.includes(origin);
+}
+
 app.post('/api/chat', async (req, res) => {
-  if (ACCESS_CODE && req.get('x-access-code') !== ACCESS_CODE) {
+  if (!isAuthorized(req)) {
     return res.status(401).json({ error: 'Неверный код доступа' });
   }
 
@@ -157,7 +167,7 @@ function sumItems(items) {
 }
 
 app.post('/api/nutrition-summary', async (req, res) => {
-  if (ACCESS_CODE && req.get('x-access-code') !== ACCESS_CODE) {
+  if (!isAuthorized(req)) {
     return res.status(401).json({ error: 'Неверный код доступа' });
   }
 
