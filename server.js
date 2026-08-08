@@ -81,5 +81,5 @@ app.post('/api/chat', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Groq Chat запущен: http://localhost:${PORT}`);
+  console.log(`Счётчик калорий запущен: http://localhost:${PORT}`);
 });
