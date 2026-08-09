@@ -53,6 +53,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Дешёвая проверка живости. Нужна, чтобы будить сервис на бесплатном Render
+// (он засыпает после ~15 минут простоя). Без авторизации и без rate limit:
+// ответ не зависит от Groq и ничего не стоит.
+app.get('/health', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.set('Access-Control-Allow-Origin', '*');
+  res.json({ ok: true, uptime: Math.round(process.uptime()) });
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Простой rate limit по IP, чтобы случайный визитёр не сжёг лимиты API
