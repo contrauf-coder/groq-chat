@@ -5,7 +5,9 @@
   "description": "Простой чат через Groq API — статический фронтенд + прокси-бэкенд, скрывающий API-ключ",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "npx -y deno@latest run --allow-net --allow-env --env-file=.env main.js",
+    "deploy": "npx -y deno@latest deploy"
   },
   "dependencies": {
     "express": "^4.19.2",
