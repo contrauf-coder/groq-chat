@@ -155,7 +155,9 @@ function isAuthorized(request) {
   if (!ACCESS_CODE) return true;
   if (request.headers.get('x-access-code') === ACCESS_CODE) return true;
   const origin = request.headers.get('origin');
-  return Boolean(origin) && ALLOWED_ORIGINS.includes(origin);
+  // Origin: null подделывается одной строкой в curl, поэтому послаблением он не пользуется:
+  // локальная ментальная карта присылает код заголовком, как чужой клиент.
+  return Boolean(origin) && origin !== 'null' && ALLOWED_ORIGINS.includes(origin);
 }
 
 async function readMessages(request) {
