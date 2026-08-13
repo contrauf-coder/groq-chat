@@ -1,6 +1,8 @@
 // Прокси к Groq API для дневника питания, версия для Deno Deploy.
 // Ключ и промпты живут только здесь: клиент выбирает режим, но не может подменить текст.
 
+import { runReminders } from './reminders.js';
+
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
@@ -310,6 +312,20 @@ async function handler(request, info) {
     });
   }
 
+  // Ручной прогон напоминаний — для проверки, обычно их запускает Deno.cron.
+  if (url.pathname === '/api/reminders/run') {
+    const secret = Deno.env.get('REMINDERS_SECRET') || '';
+    if (!secret || request.headers.get('x-reminders-secret') !== secret) {
+      return json({ error: 'Нет доступа' }, 401, cors);
+    }
+    try {
+      return json(await runReminders(), 200, cors);
+    } catch (err) {
+      console.error('Напоминания:', err);
+      return json({ error: String(err) }, 500, cors);
+    }
+  }
+
   const isApi = url.pathname === '/api/chat' || url.pathname === '/api/nutrition-summary';
   if (!isApi) return json({ error: 'Не найдено' }, 404, cors);
   if (request.method !== 'POST') return json({ error: 'Ожидается POST' }, 405, cors);
@@ -329,6 +345,18 @@ async function handler(request, info) {
     console.error('Ошибка запроса к Groq:', err);
     return json({ error: 'Не удалось связаться с Groq API' }, 502, cors);
   }
+}
+
+// Раз в минуту: у каждого пациента свой часовой пояс, поэтому «13:00 у него»
+// нельзя поймать почасовым расписанием — проверяем часто и шлём один раз за день.
+if (typeof Deno.cron === 'function' && Deno.env.get('FIREBASE_SERVICE_ACCOUNT')) {
+  Deno.cron('nutrition-reminders', '* * * * *', async () => {
+    try {
+      await runReminders();
+    } catch (err) {
+      console.error('Напоминания:', err);
+    }
+  });
 }
 
 Deno.serve({ port: Number(Deno.env.get('PORT')) || 8000 }, handler);
