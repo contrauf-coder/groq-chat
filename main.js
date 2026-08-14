@@ -126,6 +126,12 @@ const MINDMAP_PROMPT = `Ты помогаешь декомпозировать �
 даже одно такое вкрапление делает ответ непригодным. Если подходящее слово не вспоминается,
 подбери простое из языка карты.`;
 
+// Иероглифы и знаки CJK: в русском ответе их быть не может ни при каких условиях.
+// Проверка и очистка — разные объекты: у литерала с флагом g test() сдвигает lastIndex.
+const CJK_CLASS = "[　-〿぀-ヿ㐀-䶿一-鿿豈-﫿＀-￯]";
+const HAS_CJK = new RegExp(CJK_CLASS);
+const ALL_CJK = new RegExp(CJK_CLASS, 'g');
+
 const MODE_PROMPTS = {
   diary: DIARY_PROMPT,
   mindmap: MINDMAP_PROMPT,
@@ -292,7 +298,17 @@ async function handleChat(request, cors) {
     return json({ error: data.error?.message || 'Ошибка Groq API' }, response.status, cors);
   }
 
-  return json({ reply: data.choices?.[0]?.message?.content ?? '' }, 200, cors);
+  let reply = data.choices?.[0]?.message?.content ?? '';
+
+  // Модель изредка роняет в русский текст иероглифы. Промптом это не лечится,
+  // поэтому одна повторная попытка, а если и она с мусором — вычищаем символы.
+  if (mode === 'mindmap' && HAS_CJK.test(reply)) {
+    const retry = await callGroq({ messages: fullMessages });
+    const second = retry.response.ok ? retry.data.choices?.[0]?.message?.content ?? '' : '';
+    reply = second && !HAS_CJK.test(second) ? second : reply.replace(ALL_CJK, '');
+  }
+
+  return json({ reply }, 200, cors);
 }
 
 async function handleSummary(request, cors) {
