@@ -2,7 +2,7 @@
   "name": "grok-chat",
   "version": "1.0.0",
   "private": true,
-  "description": "Прокси к Groq API для дневника питания: скрывает ключ и держит промпты на сервере",
+  "description": "Прокси к DeepSeek API для дневника питания и ментальной карты: скрывает ключ и держит промпты на сервере",
   "main": "main.js",
   "scripts": {
     "dev": "npx -y deno@latest run --allow-net --allow-env --env-file=.env main.js",

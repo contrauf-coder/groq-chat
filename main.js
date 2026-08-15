@@ -1,17 +1,20 @@
-// Прокси к Groq API для дневника питания, версия для Deno Deploy.
+// Прокси к DeepSeek API для дневника питания и ментальной карты, версия для Deno Deploy.
 // Ключ и промпты живут только здесь: клиент выбирает режим, но не может подменить текст.
 
 import { runReminders } from './reminders.js';
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-
-const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
-const GROQ_MODEL = Deno.env.get('GROQ_MODEL') || 'llama-3.3-70b-versatile';
+// API совместим с OpenAI, поэтому смена провайдера — это смена трёх констант,
+// а не переписывание вызова: тело запроса и разбор ответа не меняются.
+const DEEPSEEK_URL = Deno.env.get('DEEPSEEK_URL') || 'https://api.deepseek.com/chat/completions';
+const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
+// Имя модели вынесено в переменную окружения: если оно окажется неточным,
+// правится в панели Deno Deploy без правки кода и без нового деплоя.
+const DEEPSEEK_MODEL = Deno.env.get('DEEPSEEK_MODEL') || 'deepseek-v4-flash';
 const ACCESS_CODE = Deno.env.get('ACCESS_CODE') || '';
 const SYSTEM_PROMPT = Deno.env.get('SYSTEM_PROMPT') || '';
 
-if (!GROQ_API_KEY) {
-  console.error('GROQ_API_KEY не задан. Локально — в .env, на Deno Deploy — в настройках проекта');
+if (!DEEPSEEK_API_KEY) {
+  console.error('DEEPSEEK_API_KEY не задан. Локально — в .env, на Deno Deploy — в настройках проекта');
   Deno.exit(1);
 }
 
@@ -357,14 +360,14 @@ async function readMessages(request) {
   return { messages: body.messages, mode: body.mode };
 }
 
-async function callGroq(payload) {
-  const response = await fetch(GROQ_URL, {
+async function callDeepSeek(payload) {
+  const response = await fetch(DEEPSEEK_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${GROQ_API_KEY}`,
+      Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
     },
-    body: JSON.stringify({ model: GROQ_MODEL, ...payload }),
+    body: JSON.stringify({ model: DEEPSEEK_MODEL, ...payload }),
   });
   const data = await response.json();
   return { response, data };
@@ -399,10 +402,10 @@ async function handleChat(request, cors) {
     ? [{ role: 'system', content: systemPrompt }, ...messages]
     : messages;
 
-  const { response, data } = await callGroq({ messages: fullMessages });
+  const { response, data } = await callDeepSeek({ messages: fullMessages });
   if (!response.ok) {
-    console.error('Groq API error:', JSON.stringify(data));
-    return json({ error: data.error?.message || 'Ошибка Groq API' }, response.status, cors);
+    console.error('DeepSeek API error:', JSON.stringify(data));
+    return json({ error: data.error?.message || 'Ошибка DeepSeek API' }, response.status, cors);
   }
 
   let reply = data.choices?.[0]?.message?.content ?? '';
@@ -410,7 +413,7 @@ async function handleChat(request, cors) {
   // Модель изредка роняет в русский текст иероглифы. Промптом это не лечится,
   // поэтому одна повторная попытка, а если и она с мусором — вычищаем символы.
   if (typeof mode === 'string' && mode.startsWith('mindmap') && HAS_CJK.test(reply)) {
-    const retry = await callGroq({ messages: fullMessages });
+    const retry = await callDeepSeek({ messages: fullMessages });
     const second = retry.response.ok ? retry.data.choices?.[0]?.message?.content ?? '' : '';
     reply = second && !HAS_CJK.test(second) ? second : reply.replace(ALL_CJK, '');
   }
@@ -422,15 +425,15 @@ async function handleSummary(request, cors) {
   const { messages, error } = await readMessages(request);
   if (error) return json({ error }, 400, cors);
 
-  const { response, data } = await callGroq({
+  const { response, data } = await callDeepSeek({
     messages: [{ role: 'system', content: SUMMARY_PROMPT }, ...messages],
     response_format: { type: 'json_object' },
     temperature: 0,
   });
 
   if (!response.ok) {
-    console.error('Groq API error:', JSON.stringify(data));
-    return json({ error: data.error?.message || 'Ошибка Groq API' }, response.status, cors);
+    console.error('DeepSeek API error:', JSON.stringify(data));
+    return json({ error: data.error?.message || 'Ошибка DeepSeek API' }, response.status, cors);
   }
 
   const raw = data.choices?.[0]?.message?.content ?? '';
@@ -480,7 +483,7 @@ async function handler(request, info) {
     return new Response(null, { status: 204, headers: cors });
   }
 
-  // Дешёвая проверка живости, без авторизации и лимитов: ответ не зависит от Groq.
+  // Дешёвая проверка живости, без авторизации и лимитов: ответ не зависит от DeepSeek.
   if (url.pathname === '/health') {
     return json({ ok: true }, 200, {
       'Cache-Control': 'no-store',
@@ -518,8 +521,8 @@ async function handler(request, info) {
       ? await handleChat(request, cors)
       : await handleSummary(request, cors);
   } catch (err) {
-    console.error('Ошибка запроса к Groq:', err);
-    return json({ error: 'Не удалось связаться с Groq API' }, 502, cors);
+    console.error('Ошибка запроса к DeepSeek:', err);
+    return json({ error: 'Не удалось связаться с DeepSeek API' }, 502, cors);
   }
 }
 

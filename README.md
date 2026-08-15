@@ -1,6 +1,6 @@
 # grok-chat
 
-Бэкенд дневника питания: прокси к Groq API (`llama-3.3-70b-versatile`). Держит
+Бэкенд дневника питания и ментальной карты: прокси к DeepSeek API. Держит
 ключ и системные промпты на сервере, чтобы их нельзя было достать из браузера.
 
 Фронтенд живёт отдельно — это `../nutrition-tracker` на Firebase Hosting.
@@ -22,7 +22,7 @@
 ```bash
 cd grok-chat
 cp .env.example .env
-# впишите в .env свой GROQ_API_KEY (console.groq.com/keys)
+# впишите в .env свой DEEPSEEK_API_KEY (platform.deepseek.com/api_keys)
 npm run dev
 ```
 
@@ -40,8 +40,9 @@ Entrypoint — `main.js`, сборки нет.
 
 | Переменная | Обязательна | Назначение |
 |---|---|---|
-| `GROQ_API_KEY` | да | ключ Groq; без него процесс падает на старте |
-| `GROQ_MODEL` | нет | модель, по умолчанию `llama-3.3-70b-versatile` |
+| `DEEPSEEK_API_KEY` | да | ключ DeepSeek; без него процесс падает на старте |
+| `DEEPSEEK_MODEL` | нет | модель, по умолчанию `deepseek-v4-flash` |
+| `DEEPSEEK_URL` | нет | адрес API, обычно трогать не нужно |
 | `ALLOWED_ORIGINS` | да | домены через запятую, без слеша на конце |
 | `ACCESS_CODE` | нет | код для чужих клиентов; пусто — проверки нет |
 | `SYSTEM_PROMPT` | нет | роль модели для запросов без `mode` |
