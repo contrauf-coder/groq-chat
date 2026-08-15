@@ -4,7 +4,13 @@
 // Триггеры (местное время пациента): завтрак пуст в 13:00, обед в 17:00, ужин в 22:00.
 // Каждое напоминание уходит один раз за день, без звука.
 
+import { getAccessToken } from './google-auth.js';
+
 const SERVICE_ACCOUNT_RAW = Deno.env.get('FIREBASE_SERVICE_ACCOUNT') || '';
+const SCOPES = [
+  'https://www.googleapis.com/auth/datastore',
+  'https://www.googleapis.com/auth/firebase.messaging',
+];
 
 const MEALS = [
   { key: 'breakfast', label: 'завтрак', hour: 13, field: 'lastBreakfastReminder', title: 'Не забудьте написать, что вы ели на завтрак' },
@@ -14,65 +20,6 @@ const MEALS = [
 
 // Токен считаем мёртвым только при этих кодах — остальные ошибки могут быть временными.
 const DEAD_TOKEN_CODES = ['UNREGISTERED', 'INVALID_ARGUMENT'];
-
-// --- Доступ к Google API: JWT сервис-аккаунта меняем на access token ---
-
-let cachedToken = null; // { value, expiresAt }
-
-function base64url(bytes) {
-  let str = '';
-  for (const b of bytes) str += String.fromCharCode(b);
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-// PEM сервис-аккаунта -> ключ для подписи RS256.
-async function importKey(pem) {
-  const body = pem.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
-  const der = Uint8Array.from(atob(body), (c) => c.charCodeAt(0));
-  return await crypto.subtle.importKey(
-    'pkcs8',
-    der,
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-}
-
-async function getAccessToken(account) {
-  if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) return cachedToken.value;
-
-  const now = Math.floor(Date.now() / 1000);
-  const header = base64url(new TextEncoder().encode(JSON.stringify({ alg: 'RS256', typ: 'JWT' })));
-  const claims = base64url(new TextEncoder().encode(JSON.stringify({
-    iss: account.client_email,
-    scope: 'https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/firebase.messaging',
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
-  })));
-
-  const key = await importKey(account.private_key);
-  const signature = await crypto.subtle.sign(
-    'RSASSA-PKCS1-v1_5',
-    key,
-    new TextEncoder().encode(`${header}.${claims}`)
-  );
-  const jwt = `${header}.${claims}.${base64url(new Uint8Array(signature))}`;
-
-  const res = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt,
-    }),
-  });
-  if (!res.ok) throw new Error(`OAuth ${res.status}: ${await res.text()}`);
-
-  const data = await res.json();
-  cachedToken = { value: data.access_token, expiresAt: Date.now() + data.expires_in * 1000 };
-  return cachedToken.value;
-}
 
 // --- Firestore REST: значения приходят обёрнутыми в тип, разворачиваем ---
 
@@ -236,7 +183,7 @@ export async function runReminders() {
   }
 
   const account = JSON.parse(SERVICE_ACCOUNT_RAW);
-  const token = await getAccessToken(account);
+  const token = await getAccessToken(account, SCOPES);
   const patients = await listPatients(account, token);
 
   let sentCount = 0;

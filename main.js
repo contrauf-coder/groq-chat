@@ -2,6 +2,7 @@
 // Ключ и промпты живут только здесь: клиент выбирает режим, но не может подменить текст.
 
 import { runReminders } from './reminders.js';
+import { deletePatient } from './admin.js';
 
 // API совместим с OpenAI, поэтому смена провайдера — это смена трёх констант,
 // а не переписывание вызова: тело запроса и разбор ответа не меняются.
@@ -501,6 +502,22 @@ async function handler(request, info) {
       return json(await runReminders(), 200, cors);
     } catch (err) {
       console.error('Напоминания:', err);
+      return json({ error: String(err) }, 500, cors);
+    }
+  }
+
+  // Удалить пациента целиком: профиль, все записи, вход. Необратимо, только по одному uid за раз.
+  if (url.pathname === '/api/admin/delete-patient' && request.method === 'POST') {
+    const secret = Deno.env.get('REMINDERS_SECRET') || '';
+    if (!secret || request.headers.get('x-reminders-secret') !== secret) {
+      return json({ error: 'Нет доступа' }, 401, cors);
+    }
+    try {
+      const body = await request.json();
+      const result = await deletePatient(body.uid);
+      return json(result, 200, cors);
+    } catch (err) {
+      console.error('Удаление пациента:', err);
       return json({ error: String(err) }, 500, cors);
     }
   }
