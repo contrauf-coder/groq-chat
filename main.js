@@ -343,8 +343,11 @@ function stripLeadIn(text) {
 }
 
 function corsHeaders(request) {
-  const origin = request.headers.get('origin');
-  if (!origin || !ALLOWED_ORIGINS.includes(origin)) return {};
+  // См. тот же фикс и комментарий в grok-chat-cf/main.js: некоторые браузеры
+  // для file:// не присылают заголовок Origin вообще, вместо ожидаемого
+  // "null" строкой — без подстановки запрос блокировался ещё до сети.
+  const origin = request.headers.get('origin') || 'null';
+  if (!ALLOWED_ORIGINS.includes(origin)) return {};
   return {
     'Access-Control-Allow-Origin': origin,
     Vary: 'Origin',
