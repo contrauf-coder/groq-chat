@@ -401,7 +401,7 @@ async function readMessages(request) {
   if (!Array.isArray(body?.messages) || body.messages.length === 0) {
     return { error: 'Поле messages обязательно и должно быть непустым массивом' };
   }
-  return { messages: body.messages, mode: body.mode };
+  return { messages: body.messages, mode: body.mode, stream: body.stream === true };
 }
 
 async function callDeepSeek(payload) {
@@ -411,10 +411,50 @@ async function callDeepSeek(payload) {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
     },
-    body: JSON.stringify({ model: DEEPSEEK_MODEL, ...payload }),
+    // thinking: disabled — без этого модель по умолчанию долго «размышляет» про
+    // себя (см. reasoning_content) прежде чем выдать хоть слово итогового ответа;
+    // ни один наш промпт видимых рассуждений не просит, нужен только прямой ответ.
+    body: JSON.stringify({ model: DEEPSEEK_MODEL, thinking: { type: 'disabled' }, ...payload }),
   });
   const data = await response.json();
   return { response, data };
+}
+
+// Потоковый вариант — см. подробное объяснение в grok-chat-cf/main.js (тот же
+// приём, портировался оттуда). Вкратце: для тяжёлых запросов (разбор карты
+// целиком) ответ пробрасывается клиенту по мере генерации, а не одним блоком
+// в конце — это защита от обрыва по простою на длинных генерациях, а не только
+// про скорость. Автоповтор при иероглифах (см. handleChat) на потоковом пути
+// не работает — единственная защита от них здесь остаётся в самом промпте.
+async function streamDeepSeek(payload, cors) {
+  const response = await fetch(DEEPSEEK_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify({ model: DEEPSEEK_MODEL, thinking: { type: 'disabled' }, stream: true, ...payload }),
+  });
+
+  if (!response.ok || !response.body) {
+    let message = 'Ошибка DeepSeek API';
+    try {
+      const data = await response.json();
+      message = data.error?.message || message;
+    } catch {
+      // тело могло быть пустым или не-JSON — оставляем сообщение по умолчанию
+    }
+    return json({ error: message }, response.status || 502, cors);
+  }
+
+  return new Response(response.body, {
+    status: 200,
+    headers: {
+      ...cors,
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 function toNonNegativeInt(value) {
@@ -437,7 +477,7 @@ function sumItems(items) {
 }
 
 async function handleChat(request, cors) {
-  const { messages, mode, error } = await readMessages(request);
+  const { messages, mode, stream, error } = await readMessages(request);
   if (error) return json({ error }, 400, cors);
 
   // mode выбирает серверный промпт; без него работает SYSTEM_PROMPT из настроек
@@ -445,6 +485,8 @@ async function handleChat(request, cors) {
   const fullMessages = systemPrompt
     ? [{ role: 'system', content: systemPrompt }, ...messages]
     : messages;
+
+  if (stream) return streamDeepSeek({ messages: fullMessages }, cors);
 
   const { response, data } = await callDeepSeek({ messages: fullMessages });
   if (!response.ok) {
